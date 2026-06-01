@@ -721,7 +721,7 @@ export default function HomePage() {
 
           </div>
 
-          <div className="mt-8 border-t pt-4 text-center text-slate-500">
+          <div className="mt-8 border-t pt-4 text-center text-slate-1000 ">
             © 2026 SmartQueue. All Rights Reserved.
           </div>
 

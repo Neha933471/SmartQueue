@@ -1,3 +1,183 @@
+// "use client";
+
+// import { useCallback, useEffect, useState } from "react";
+// import { apiRequest } from "../../../lib/api";
+// import AdminShell from "../../components/AdminShell";
+// import RequireRole from "../../components/RequireRole";
+// import StatusMessage from "../../components/StatusMessage";
+// import { useToast } from "../../components/Toast";
+
+// type Appointment = {
+//   _id: string;
+//   tokenNumber: number;
+//   slotTime: string;
+//   status: string;
+//   appointmentCode?: string;
+//   userId?: { name: string; email: string; phone?: string };
+//   serviceId?: { _id: string; name: string };
+// };
+
+// type Service = { _id: string; name: string };
+
+// export default function AdminAppointmentsPage() {
+//   const { showToast } = useToast();
+//   const [appointments, setAppointments] = useState<Appointment[]>([]);
+//   const [services, setServices] = useState<Service[]>([]);
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(true);
+//   const [filters, setFilters] = useState({
+//     serviceId: "",
+//     status: "",
+//     date: "",
+//     search: ""
+//   });
+
+//   const buildQuery = () => {
+//     const params = new URLSearchParams();
+//     if (filters.serviceId) params.set("serviceId", filters.serviceId);
+//     if (filters.status) params.set("status", filters.status);
+//     if (filters.date) params.set("date", filters.date);
+//     if (filters.search) params.set("search", filters.search);
+//     const q = params.toString();
+//     return q ? `?${q}` : "";
+//   };
+
+//   const load = useCallback(() => {
+//     setLoading(true);
+//     apiRequest<Appointment[]>(`/admin/appointments${buildQuery()}`)
+//       .then(setAppointments)
+//       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
+//       .finally(() => setLoading(false));
+//   }, [filters]);
+
+//   useEffect(() => {
+//     apiRequest<Service[]>("/admin/services?includeInactive=true").then(setServices).catch(() => {});
+//   }, []);
+
+//   useEffect(() => {
+//     load();
+//   }, [load]);
+
+//   const cancel = async (id: string) => {
+//     try {
+//       await apiRequest(`/admin/appointments/${id}/cancel`, { method: "PATCH" });
+//       showToast("Appointment cancelled", "success");
+//       load();
+//     } catch (err) {
+//       showToast(err instanceof Error ? err.message : "Cancel failed", "error");
+//     }
+//   };
+
+//   const updateStatus = async (id: string, status: string) => {
+//     try {
+//       await apiRequest(`/admin/appointments/${id}/status`, {
+//         method: "PATCH",
+//         body: JSON.stringify({ status })
+//       });
+//       showToast(`Status updated to ${status}`, "success");
+//       load();
+//     } catch (err) {
+//       showToast(err instanceof Error ? err.message : "Update failed", "error");
+//     }
+//   };
+
+//   return (
+//     <RequireRole role="admin" redirectTo="/admin/login">
+//       <AdminShell>
+//         <h1 className="text-2xl font-bold">Manage Appointments</h1>
+//         <div className="mt-4 grid gap-3 rounded-md border bg-white p-4 md:grid-cols-4">
+//           <select
+//             className="rounded-md border px-3 py-2 text-sm"
+//             value={filters.serviceId}
+//             onChange={(e) => setFilters({ ...filters, serviceId: e.target.value })}
+//           >
+//             <option value="">All consultations</option>
+//             {services.map((s) => (
+//               <option key={s._id} value={s._id}>
+//                 {s.name}
+//               </option>
+//             ))}
+//           </select>
+//           <select
+//             className="rounded-md border px-3 py-2 text-sm"
+//             value={filters.status}
+//             onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+//           >
+//             <option value="">All statuses</option>
+//             {["booked", "checked-in", "in-service", "completed", "cancelled"].map((s) => (
+//               <option key={s} value={s}>
+//                 {s}
+//               </option>
+//             ))}
+//           </select>
+//           <input
+//             type="date"
+//             className="rounded-md border px-3 py-2 text-sm"
+//             value={filters.date}
+//             onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+//           />
+//           <input
+//             className="rounded-md border px-3 py-2 text-sm"
+//             placeholder="Search name, email, ID…"
+//             value={filters.search}
+//             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+//           />
+//         </div>
+//         <div className="mt-6 space-y-3">
+//           <StatusMessage error={error} />
+//           {loading ? <p className="text-slate-600">Loading appointments...</p> : null}
+//           {appointments.map((appointment) => (
+//             <article key={appointment._id} className="rounded-md border bg-white p-4">
+//               <div className="flex flex-wrap items-center justify-between gap-3">
+//                 <div>
+//                   <p className="font-semibold">{appointment.userId?.name || "Customer"}</p>
+//                   <p className="text-sm text-slate-600">
+//                     {appointment.serviceId?.name} | {new Date(appointment.slotTime).toLocaleString()} |
+//                     Token {appointment.tokenNumber} | {appointment.status}
+//                   </p>
+//                   <p className="text-xs text-slate-500">ID: {appointment.appointmentCode || appointment._id}</p>
+//                   <p className="text-xs text-slate-500">
+//                     {appointment.userId?.email}
+//                     {appointment.userId?.phone ? ` | ${appointment.userId.phone}` : ""}
+//                   </p>
+//                 </div>
+//                 <div className="flex flex-wrap gap-2">
+//                   {appointment.status !== "completed" && appointment.status !== "cancelled" ? (
+//                     <>
+//                       <button
+//                         onClick={() => updateStatus(appointment._id, "in-service")}
+//                         className="rounded-md border px-2 py-1 text-xs"
+//                       >
+//                         In Service
+//                       </button>
+//                       <button
+//                         onClick={() => updateStatus(appointment._id, "completed")}
+//                         className="rounded-md border px-2 py-1 text-xs"
+//                       >
+//                         Complete
+//                       </button>
+//                       <button
+//                         onClick={() => cancel(appointment._id)}
+//                         className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700"
+//                       >
+//                         Cancel
+//                       </button>
+//                     </>
+//                   ) : null}
+//                 </div>
+//               </div>
+//             </article>
+//           ))}
+//           {!appointments.length && !error && !loading ? (
+//             <p className="text-slate-600">No appointments match your filters.</p>
+//           ) : null}
+//         </div>
+//       </AdminShell>
+//     </RequireRole>
+//   );
+// }
+
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -21,15 +201,17 @@ type Service = { _id: string; name: string };
 
 export default function AdminAppointmentsPage() {
   const { showToast } = useToast();
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
   const [filters, setFilters] = useState({
     serviceId: "",
     status: "",
     date: "",
-    search: ""
+    search: "",
   });
 
   const buildQuery = () => {
@@ -38,20 +220,26 @@ export default function AdminAppointmentsPage() {
     if (filters.status) params.set("status", filters.status);
     if (filters.date) params.set("date", filters.date);
     if (filters.search) params.set("search", filters.search);
+
     const q = params.toString();
     return q ? `?${q}` : "";
   };
 
   const load = useCallback(() => {
     setLoading(true);
+
     apiRequest<Appointment[]>(`/admin/appointments${buildQuery()}`)
       .then(setAppointments)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load")
+      )
       .finally(() => setLoading(false));
   }, [filters]);
 
   useEffect(() => {
-    apiRequest<Service[]>("/admin/services?includeInactive=true").then(setServices).catch(() => {});
+    apiRequest<Service[]>("/admin/services?includeInactive=true")
+      .then(setServices)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -60,11 +248,17 @@ export default function AdminAppointmentsPage() {
 
   const cancel = async (id: string) => {
     try {
-      await apiRequest(`/admin/appointments/${id}/cancel`, { method: "PATCH" });
+      await apiRequest(`/admin/appointments/${id}/cancel`, {
+        method: "PATCH",
+      });
+
       showToast("Appointment cancelled", "success");
       load();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Cancel failed", "error");
+      showToast(
+        err instanceof Error ? err.message : "Cancel failed",
+        "error"
+      );
     }
   };
 
@@ -72,107 +266,179 @@ export default function AdminAppointmentsPage() {
     try {
       await apiRequest(`/admin/appointments/${id}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status }),
       });
+
       showToast(`Status updated to ${status}`, "success");
       load();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Update failed", "error");
+      showToast(
+        err instanceof Error ? err.message : "Update failed",
+        "error"
+      );
     }
   };
 
   return (
     <RequireRole role="admin" redirectTo="/admin/login">
-      <AdminShell>
-        <h1 className="text-2xl font-bold">Manage Appointments</h1>
-        <div className="mt-4 grid gap-3 rounded-md border bg-white p-4 md:grid-cols-4">
-          <select
-            className="rounded-md border px-3 py-2 text-sm"
-            value={filters.serviceId}
-            onChange={(e) => setFilters({ ...filters, serviceId: e.target.value })}
-          >
-            <option value="">All consultations</option>
-            {services.map((s) => (
-              <option key={s._id} value={s._id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="rounded-md border px-3 py-2 text-sm"
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">All statuses</option>
-            {["booked", "checked-in", "in-service", "completed", "cancelled"].map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <input
-            type="date"
-            className="rounded-md border px-3 py-2 text-sm"
-            value={filters.date}
-            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-          />
-          <input
-            className="rounded-md border px-3 py-2 text-sm"
-            placeholder="Search name, email, ID…"
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          />
-        </div>
-        <div className="mt-6 space-y-3">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-sky-100 to-purple-100 p-6 flex justify-center">
+
+        {/* Glass Container */}
+        <div className="w-full max-w-7xl rounded-2xl shadow-2xl bg-white/80 backdrop-blur-md border border-white/40 p-6">
+
+          {/* Header */}
+          <h1 className="text-3xl font-bold text-indigo-600 text-center">
+            Manage Appointments
+          </h1>
+
           <StatusMessage error={error} />
-          {loading ? <p className="text-slate-600">Loading appointments...</p> : null}
-          {appointments.map((appointment) => (
-            <article key={appointment._id} className="rounded-md border bg-white p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{appointment.userId?.name || "Customer"}</p>
-                  <p className="text-sm text-slate-600">
-                    {appointment.serviceId?.name} | {new Date(appointment.slotTime).toLocaleString()} |
-                    Token {appointment.tokenNumber} | {appointment.status}
-                  </p>
-                  <p className="text-xs text-slate-500">ID: {appointment.appointmentCode || appointment._id}</p>
-                  <p className="text-xs text-slate-500">
-                    {appointment.userId?.email}
-                    {appointment.userId?.phone ? ` | ${appointment.userId.phone}` : ""}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {appointment.status !== "completed" && appointment.status !== "cancelled" ? (
-                    <>
-                      <button
-                        onClick={() => updateStatus(appointment._id, "in-service")}
-                        className="rounded-md border px-2 py-1 text-xs"
-                      >
-                        In Service
-                      </button>
-                      <button
-                        onClick={() => updateStatus(appointment._id, "completed")}
-                        className="rounded-md border px-2 py-1 text-xs"
-                      >
-                        Complete
-                      </button>
-                      <button
-                        onClick={() => cancel(appointment._id)}
-                        className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-700"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : null}
+
+          {loading ? (
+            <p className="text-center text-slate-600 mt-4">
+              Loading appointments...
+            </p>
+          ) : null}
+
+          {/* Filters */}
+          <div className="mt-6 grid gap-3 rounded-2xl border border-slate-100 bg-gradient-to-r from-white to-sky-50 p-4 md:grid-cols-4">
+
+            <select
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              value={filters.serviceId}
+              onChange={(e) =>
+                setFilters({ ...filters, serviceId: e.target.value })
+              }
+            >
+              <option value="">All consultations</option>
+              {services.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              value={filters.status}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value })
+              }
+            >
+              <option value="">All statuses</option>
+              {[
+                "booked",
+                "checked-in",
+                "in-service",
+                "completed",
+                "cancelled",
+              ].map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              value={filters.date}
+              onChange={(e) =>
+                setFilters({ ...filters, date: e.target.value })
+              }
+            />
+
+            <input
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              placeholder="Search name, email, ID…"
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value })
+              }
+            />
+          </div>
+
+          {/* Appointments List */}
+          <div className="mt-6 space-y-4">
+            {appointments.map((appointment) => (
+              <div
+                key={appointment._id}
+                className="rounded-2xl border border-slate-100 bg-gradient-to-r from-white to-sky-50 p-4 shadow-sm hover:shadow-md transition"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+
+                  {/* Info */}
+                  <div>
+                    <p className="font-semibold text-slate-800">
+                      👤 {appointment.userId?.name || "Customer"}
+                    </p>
+
+                    <p className="text-sm text-slate-600 mt-1">
+                      🏥 {appointment.serviceId?.name} | 📅{" "}
+                      {new Date(appointment.slotTime).toLocaleString()} | 🎫{" "}
+                      Token {appointment.tokenNumber} |{" "}
+                      <span className="text-indigo-600 font-medium">
+                        {appointment.status}
+                      </span>
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      ID: {appointment.appointmentCode || appointment._id}
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      {appointment.userId?.email}
+                      {appointment.userId?.phone
+                        ? ` | ${appointment.userId.phone}`
+                        : ""}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2">
+                    {appointment.status !== "completed" &&
+                    appointment.status !== "cancelled" ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            updateStatus(appointment._id, "in-service")
+                          }
+                          className="rounded-xl border border-indigo-300 text-indigo-600 px-3 py-1.5 text-xs hover:bg-indigo-50 transition"
+                        >
+                          In Service
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            updateStatus(appointment._id, "completed")
+                          }
+                          className="rounded-xl border border-green-300 text-green-600 px-3 py-1.5 text-xs hover:bg-green-50 transition"
+                        >
+                          Complete
+                        </button>
+
+                        <button
+                          onClick={() => cancel(appointment._id)}
+                          className="rounded-xl border border-red-300 text-red-600 px-3 py-1.5 text-xs hover:bg-red-50 transition"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+
                 </div>
               </div>
-            </article>
-          ))}
-          {!appointments.length && !error && !loading ? (
-            <p className="text-slate-600">No appointments match your filters.</p>
-          ) : null}
+            ))}
+
+            {!appointments.length && !error && !loading ? (
+              <p className="text-center text-slate-500 mt-6">
+                No appointments match your filters.
+              </p>
+            ) : null}
+          </div>
+
         </div>
-      </AdminShell>
+      </div>
     </RequireRole>
   );
 }

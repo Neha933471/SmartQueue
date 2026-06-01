@@ -57,6 +57,98 @@
 //   );
 // }
 
+// "use client";
+
+// import { useState } from "react";
+// import { useRouter } from "next/navigation";
+// import { apiRequest, saveSession } from "../../../lib/api";
+// import StatusMessage from "../../components/StatusMessage";
+
+// export default function AdminLoginPage() {
+//   const router = useRouter();
+
+//   const [form, setForm] = useState({
+//     email: "",
+//     password: "",
+//   });
+
+//   const [error, setError] = useState("");
+
+//   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+//     event.preventDefault();
+//     setError("");
+
+//     try {
+//       const user = await apiRequest("/admin/auth/login", {
+//         method: "POST",
+//         body: JSON.stringify(form),
+//       });
+
+//       saveSession(user);
+
+//       router.push("/admin/dashboard");
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : "Login failed");
+//     }
+//   };
+
+//   return (
+//     <main className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100 flex items-center justify-center px-6 py-10">
+//       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
+//         <div className="text-center mb-8">
+//           <h1 className="text-4xl font-bold text-teal-700">
+//             SmartQueue
+//           </h1>
+
+//           <p className="text-gray-500 mt-2">
+//             Admin Login Portal
+//           </p>
+//         </div>
+
+//         <form onSubmit={submit} className="space-y-5">
+//           <input
+//             type="email"
+//             placeholder="Admin Email"
+//             value={form.email}
+//             onChange={(event) =>
+//               setForm({
+//                 ...form,
+//                 email: event.target.value,
+//               })
+//             }
+//             className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-400"
+//             required
+//           />
+
+//           <input
+//             type="password"
+//             placeholder="Password"
+//             value={form.password}
+//             onChange={(event) =>
+//               setForm({
+//                 ...form,
+//                 password: event.target.value,
+//               })
+//             }
+//             className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-400"
+//             required
+//           />
+
+//           <StatusMessage error={error} />
+
+//           <button
+//             type="submit"
+//             className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold transition"
+//           >
+//             Login
+//           </button>
+//         </form>
+//       </div>
+//     </main>
+//   );
+// }
+
+
 "use client";
 
 import { useState } from "react";
@@ -85,7 +177,6 @@ export default function AdminLoginPage() {
       });
 
       saveSession(user);
-
       router.push("/admin/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -93,55 +184,58 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100 flex items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
+    <main className="min-h-screen bg-gradient-to-br from-indigo-100 via-sky-100 to-purple-100 flex items-center justify-center p-6">
+
+      {/* Glass Login Card */}
+      <div className="w-full max-w-md rounded-3xl shadow-2xl bg-white/80 backdrop-blur-md border border-white/40 p-8">
+
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-teal-700">
+          <h1 className="text-4xl font-bold text-indigo-600">
             SmartQueue
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p className="text-sm text-slate-600 mt-2">
             Admin Login Portal
           </p>
         </div>
 
         <form onSubmit={submit} className="space-y-5">
+
+          {/* Email */}
           <input
             type="email"
             placeholder="Admin Email"
             value={form.email}
-            onChange={(event) =>
-              setForm({
-                ...form,
-                email: event.target.value,
-              })
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
             }
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             required
           />
 
+          {/* Password */}
           <input
             type="password"
             placeholder="Password"
             value={form.password}
-            onChange={(event) =>
-              setForm({
-                ...form,
-                password: event.target.value,
-              })
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
             }
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             required
           />
 
           <StatusMessage error={error} />
 
+          {/* Button */}
           <button
             type="submit"
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-semibold transition"
+            className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 font-semibold shadow-md hover:shadow-lg transition"
           >
             Login
           </button>
+
         </form>
       </div>
     </main>
